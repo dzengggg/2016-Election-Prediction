@@ -1,0 +1,89 @@
+---
+title: "PSTAT 131 PRoject"
+author: "Bidal Orozco, Daniel Zeng, Santino Gonzalez"
+date: "March 18, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, cache = TRUE)
+
+indent1 = '    '
+indent2 = paste(rep(indent1, 2), collapse='')
+indent3 = paste(rep(indent1, 3), collapse='')
+
+doeval = FALSE
+
+library(knitr)
+library(tidyverse)
+library(ggmap)
+library(maps)
+library(Rtsne)
+library(NbClust)
+library(tree)
+library(maptree)
+library(class)
+library(reshape2)
+```
+
+1. What makes voter behavior prediction (and thus election forecasting) a hard problem?
+
+  Voter behavior prediction can only be as accurate as the data collected for the prediction. Something to worry about when polling for election data is people lying about their preferences. For 2016 in particular the candidates were highly unpopular and so exit polls may have not represented people's true feelings. 
+  
+```{r}
+election.raw = read.csv("C:/Users/Junior/Desktop/Education/Winter 2018/PSTAT 131slash231/131FinalProject/final-project/data/election/election.csv") %>% as.tbl
+
+census_meta = read.csv("C:/Users/Junior/Desktop/Education/Winter 2018/PSTAT 131slash231/131FinalProject/final-project/data/census/metadata.csv", sep = ";") %>% as.tbl
+
+census = read.csv("C:/Users/Junior/Desktop/Education/Winter 2018/PSTAT 131slash231/131FinalProject/final-project/data/census/census.csv") %>% as.tbl
+
+census$CensusTract = as.factor(census$CensusTract)
+
+kable(election.raw %>% head)
+```
+
+
+
+
+4.
+```{r}
+election_federal <- election.raw %>% filter( fips == "US")
+
+election_state <- election.raw %>% filter()
+election_federal
+```
+
+
+
+5.
+```{r}
+# Creates a datafram of Candidates and how many votes they recieved
+Candidate_Votes <- (election_federal %>% select(candidate, votes))
+
+# Orders Data frame elements to make the barplot display
+# in descending order.
+Candidate_Votes <- Candidate_Votes[order(Candidate_Votes$votes),]
+
+
+# Re-orders the factor variable "candidate" for 
+# displaying the barplot in descending order
+candidate.ordered <-  factor(Candidate_Votes$candidate, levels = as.vector(Candidate_Votes$candidate))
+
+# Creates a Percentage variable to make barplot easier to read
+Candidate_Votes <- Candidate_Votes %>% mutate(percentage = votes/sum(votes), candidate = candidate.ordered) 
+
+ggplot(Candidate_Votes, aes(candidate, percentage)) + 
+  geom_col(fill = c(rep("black", times = nrow(Candidate_Votes) - 2), "red", "blue"))+coord_flip()+ labs(title = "2016 U.S. Presidential Election Candidate Votes", x = "Candidate", y = "Share of Votes by Percentage") + 
+  geom_text(aes(label=votes), size = 3, nudge_y = 0.04, nudge_x = 0.08)+guides("Legend", nrow = 3, ncol = 2 )
+```
+
+
+7.
+```{r}
+county = map_data("county")
+
+ggplot(data = county) + 
+  geom_polygon(aes(x = long, y = lat, fill = subregion, group = group), color = "white") + 
+  coord_fixed(1.3) +
+  guides(fill=FALSE)  # color legend is unnecessary and takes too long
+```
