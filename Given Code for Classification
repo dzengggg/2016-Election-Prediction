@@ -1,0 +1,35 @@
+```{r}
+tmpwinner = county_winner %>% ungroup %>%
+  mutate(state = state.name[match(state, state.abb)]) %>%               ## state abbreviations
+  mutate_at(vars(state, county), tolower) %>%                           ## to all lowercase
+  mutate(county = gsub(" county| columbia| city| parish", "", county))  ## remove suffixes
+census.tolower <- census.ct
+census.tolower$State <- tolower(census.tolower$State)
+census.tolower$County <- tolower(census.tolower$County)
+tmpcensus <- census.tolower
+
+election.cl = tmpwinner %>%
+  left_join(tmpcensus, by = c("state"="State", "county"="County")) %>% 
+  na.omit
+
+## saves meta information to attributes
+attr(election.cl, "location") = election.cl %>% select(c(county, fips, state, votes, pct))
+election.cl = election.cl %>% select(-c(county, fips, state, votes, pct))
+
+set.seed(10) 
+n = nrow(election.cl)
+in.trn= sample.int(n, 0.8*n) 
+trn.cl = election.cl[ in.trn,]
+tst.cl = election.cl[-in.trn,]
+
+set.seed(20) 
+nfold = 10
+folds = sample(cut(1:nrow(trn.cl), breaks=nfold, labels=FALSE))
+
+calc_error_rate = function(predicted.value, true.value){
+  return(mean(true.value!=predicted.value))
+}
+records = matrix(NA, nrow=3, ncol=2)
+colnames(records) = c("train.error","test.error")
+rownames(records) = c("tree","knn","lda")
+```
