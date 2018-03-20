@@ -5,16 +5,27 @@ PSTAT 131 Data Mining Project
 
 PROGRESS: 1 - 9, 11, 15 COMPLETE
 
-TO DO:\n
+
+TO DO:
+
 12, 13: Santino
+
 10: Daniel (help me pls)
+
 14: Daniel
 
 
 ### TYPE YOUR NAME NEXT TO STUFF YOU WANT TO DO
+
+
 16
+
 17
+
 18
+
 19
+
 20
+
 21: MEET UP 
