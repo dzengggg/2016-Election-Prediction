@@ -1,0 +1,278 @@
+---
+title: "PSTAT 131 PRoject"
+author: "Bidal Orozco, Daniel Zeng, Santino Gonzalez"
+date: "March 18, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, cache = TRUE)
+
+indent1 = '    '
+indent2 = paste(rep(indent1, 2), collapse='')
+indent3 = paste(rep(indent1, 3), collapse='')
+
+doeval = FALSE
+
+library(knitr)
+library(tidyverse)
+library(ggmap)
+library(maps)
+library(Rtsne)
+library(NbClust)
+library(tree)
+library(maptree)
+library(class)
+library(reshape2)
+```
+
+1. What makes voter behavior prediction (and thus election forecasting) a hard problem?
+
+  Voter behavior prediction can only be as accurate as the data collected for the prediction. Something to worry about when polling for election data is people lying about their preferences. For 2016 in particular the candidates were highly unpopular and so exit polls may have not represented people's true feelings. 
+  
+```{r}
+election.raw = read.csv("C:/Users/Junior/Desktop/Education/Winter 2018/PSTAT 131slash231/131FinalProject/final-project/data/election/election.csv") %>% as.tbl
+
+census_meta = read.csv("C:/Users/Junior/Desktop/Education/Winter 2018/PSTAT 131slash231/131FinalProject/final-project/data/census/metadata.csv", sep = ";") %>% as.tbl
+
+census = read.csv("C:/Users/Junior/Desktop/Education/Winter 2018/PSTAT 131slash231/131FinalProject/final-project/data/census/census.csv") %>% as.tbl
+
+census$CensusTract = as.factor(census$CensusTract)
+
+kable(election.raw %>% head)
+```
+
+
+
+
+4.
+```{r}
+election_federal <- filter(election.raw, fips == "US")
+election_state <- filter(election.raw, fips != "US" & is.na(county)) 
+election <- filter(election.raw, !is.na(county))
+#Adding missing county observations to election data frame
+election <- rbind(election, election_state[309:312,])
+#Taking out bad observations from state data frame
+election_state <- filter(election_state, fips != 46102 & fips != 2000)
+```
+
+
+
+5.
+```{r}
+# Creates a datafram of Candidates and how many votes they recieved
+Candidate_Votes <- (election_federal %>% select(candidate, votes))
+
+# Orders Data frame elements in descending order for
+# re-leveling of factors
+Candidate_Votes <- Candidate_Votes[order(Candidate_Votes$votes),]
+
+
+# Re-orders the factor variable "candidate" for 
+# displaying the barplot in descending order
+candidate.ordered <-  factor(Candidate_Votes$candidate, levels = as.vector(Candidate_Votes$candidate))
+
+# Creates a Percentage variable to make barplot easier to read
+Candidate_Votes <- Candidate_Votes %>% mutate(percentage = votes/sum(votes), candidate = candidate.ordered) 
+
+ggplot(Candidate_Votes, aes(candidate, percentage)) + 
+  geom_col(fill = c(rep("black", times = nrow(Candidate_Votes) - 2), "red", "blue"))+coord_flip()+ labs(title = "2016 U.S. Presidential Election Candidate Votes", x = "Candidate", y = "Share of Votes by Percentage") + 
+  geom_text(aes(label=votes), size = 3, nudge_y = 0.04, nudge_x = 0.08)+guides("Legend", nrow = 3, ncol = 2 )
+```
+
+6.
+```{r}
+county.group <- group_by(election, fips)
+total.group <- summarize(county.group, total = sum(votes))
+count.group <- left_join(county.group, total.group, by = "fips")
+county.pct <- mutate(count.group, pct = votes/total)       
+county_winner <- top_n(county.pct, n =1)
+
+state.group <- group_by(election_state, state)
+total.stqte <- summarize(state.group, total = sum(votes))
+join.state <- left_join(state.group, total.stqte, by = "state")
+state.pct <- mutate(join.state, pct = votes/total)
+state_winner <- top_n(state.pct, n= 1)
+
+```
+
+7.
+```{r}
+county = map_data("county")
+
+ggplot(data = county) + 
+  geom_polygon(aes(x = long, y = lat, fill = subregion, group = group), color = "white") + 
+  coord_fixed(1.3) +
+  guides(fill=FALSE)  # color legend is unnecessary and takes too long
+```
+
+
+11.
+```{r Creates census.del}
+census.del <- census
+
+# removes rows with missing data
+census.del <- census.del[complete.cases(census.del),]
+
+# converts {`Men`, `Employed`, `Citizen`} to percentages
+census.del <- census.del %>% 
+  mutate(Men = 100*Men/TotalPop, 
+          Employed = 100*Employed/TotalPop,
+          Citizen = 100*Citizen/TotalPop)
+
+# Combines {Hispanic, Black, Native, Asian, Pacific} into `Minority` attribute and removes them.
+census.del <- census.del %>% mutate(Minority = Hispanic + Black + Native + Asian + Pacific)%>% select(-Hispanic, -Black, -Native, -Asian, -Pacific)
+
+# Moves Minority attribute  to a more ergonomic index
+census.del <- census.del[c(1:7, ncol(census.del), 8:(ncol(census.del)-1))]
+
+#Removes {`Walk`, `PublicWork`, `Construction`} attributes
+census.del <- select(census.del, -Walk, -PublicWork, -Construction)
+
+# Removes "redundant" variables
+census.del <- census.del %>% select(-Women,-White)
+census.del
+```
+
+```{r Creates census.subct}
+# Creates census sub-county variable and groups tibble by
+# State and County
+census.subct <- group_by(census.del,State, County)
+
+# Tallys how many subcounties are in each county of each state and
+# names the column of tallies "CountyTotal"
+census.subct <- add_tally(census.subct)
+names(census.subct)[ncol(census.subct)] <- "CountyTotal"
+
+# Finds weight for each subcounty defines as Population size with
+# respect to how many subcounties are in the county.
+census.subct <- mutate(census.subct, CountyWeight = TotalPop/CountyTotal)
+census.subct
+```
+
+```{r Creates census.ct}
+census.ct <- census.subct
+
+# Creates a total weight of the county weight for averaging
+CountyWeightSum <- summarise_at(census.ct, .funs = funs(sum), .vars = vars("CountyWeight"))
+
+# Renames County Weight Total for easier reading
+names(CountyWeightSum)[ncol(CountyWeightSum)] <- "CountyWeightSum"
+
+#Attaches CountyWeightSum variable to census.ct
+census.ct <- left_join(census.ct,CountyWeightSum , by = c("State", "County"))
+
+# Revalues CountyWeight to reflect its percentage of county total weight
+census.ct <- mutate(census.ct, CountyWeight = CountyWeight/CountyWeightSum)
+
+# Removes Unnecessary Variables
+# information is already found in CountyWeight
+census.ct <- select(census.ct, -CountyWeightSum, - CountyTotal)
+
+# Applies Weightes to SubCounty Data
+census.ct[5:28] <- census.ct[5:28]*census.ct$CountyWeight
+
+# Aggregates population weighted subcounty data into County data
+census.ct <- census.ct %>% summarise_at(vars(TotalPop:Unemployment), funs(sum))
+
+# Removes CountyWeight variable: it's no longer necessary
+# Also Removes CensusTract as it is not a summable unit
+census.ct <- select(census.ct, -CountyWeight, -CensusTract)
+
+head(census.ct)
+
+```
+
+
+```{r}
+tmpwinner = county_winner %>% ungroup %>%
+  mutate(state = state.name[match(state, state.abb)]) %>%               ## state abbreviations
+  mutate_at(vars(state, county), tolower) %>%                           ## to all lowercase
+  mutate(county = gsub(" county| columbia| city| parish", "", county))  ## remove suffixes
+census.tolower <- census.ct
+census.tolower$State <- tolower(census.tolower$State)
+census.tolower$County <- tolower(census.tolower$County)
+tmpcensus <- census.tolower
+
+election.cl = tmpwinner %>%
+  left_join(tmpcensus, by = c("state"="State", "county"="County")) %>% 
+  na.omit
+
+## saves meta information to attributes
+attr(election.cl, "location") = election.cl %>% select(c(county, fips, state, votes, pct))
+election.cl = election.cl %>% select(-c(county, fips, state, votes, pct))
+
+set.seed(10) 
+n = nrow(election.cl)
+in.trn= sample.int(n, 0.8*n) 
+trn.cl = election.cl[ in.trn,]
+tst.cl = election.cl[-in.trn,]
+
+set.seed(20) 
+nfold = 10
+folds = sample(cut(1:nrow(trn.cl), breaks=nfold, labels=FALSE))
+
+calc_error_rate = function(predicted.value, true.value){
+  return(mean(true.value!=predicted.value))
+}
+records = matrix(NA, nrow=3, ncol=2)
+colnames(records) = c("train.error","test.error")
+rownames(records) = c("tree","knn","lda")
+```
+14.
+```{r cache = T}
+# K values for testing
+k.test = c(1, seq(10,50, length.out = 9))
+
+# Function for CV
+do.chunk <- function(chunkid, folddef, Xdat, Ydat, k){
+train = (folddef!=chunkid)
+Xtr = Xdat[train,]
+Ytr = Ydat[train]
+Xvl = Xdat[!train,]
+Yvl = Ydat[!train]
+## get classifications for current training chunks
+predYtr = knn(train = Xtr, test = Xtr, cl = Ytr, k = k)
+## get classifications for current test chunk
+predYvl = knn(train = Xtr, test = Xvl, cl = Ytr, k = k)
+# Returns a data fram of Training Error and Validation Error
+data.frame(train.error = calc_error_rate(predYtr, Ytr),
+val.error = calc_error_rate(predYvl, Yvl))
+}
+
+K_Errors <- tibble("K" = k.test, "AveTrnError" = NA, "AveTstError" = NA)
+
+predictors <- select(trn.cl, -candidate)
+
+for(i in 1:10){
+
+temp <- plyr::ldply(1:10, do.chunk, folds,predictors, trn.cl$candidate, K_Errors$K[i])
+
+K_Errors$AveTrnError[i] <- mean(temp[,1])
+K_Errors$AveTstError[i] <- mean(temp[,2])
+}
+
+```
+
+```{r}
+# Melts columns for plotting
+K_Errors_yax <- melt(K_Errors, id = "K")
+# Renames observations for plot readability
+names(K_Errors_yax)[2] <- "Legend"
+levels(K_Errors_yax$Legend)<- c("Training Error", "Testing Error")
+
+
+ggplot(K_Errors_yax, aes(x = K))+ ggtitle("KNN 10-Fold Cross Validation Training and Testing Error")+ ylab("Error Rate")+geom_smooth(aes(x = K,y = value, colour = Legend), se = F) + scale_color_manual(values = c("orange","blue"))
+```
+
+```{r}
+# Plot shows that K = 15 is best balance of training and test error.
+# Makes training set and test set predictions using k = 15
+prediction.trn <- knn(train = trn.cl[2:27], test = trn.cl[2:27], cl = trn.cl$candidate, k = 15)
+prediction.tst <- knn(train = trn.cl[2:27], test = tst.cl[2:27], cl = trn.cl$candidate, k = 15)
+
+# Saves KNN results into records matrix
+records[2,1] <- calc_error_rate(prediction.trn, trn.cl$candidate)
+records[2,2] <- calc_error_rate(prediction.tst, tst.cl$candidate)
+records
+```
