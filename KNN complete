@@ -35,6 +35,27 @@ K_Errors$AveTstError[i] <- mean(temp[,2])
 # K vs both Errors before making decision
 prediction.trn = knn(train = trn.cl[2:27], test = trn.cl[2:27], cl = trn.cl$candidate, k = 2)
 #prediction.tst <- knn(train = trn.cl[2:27], test = tst.cl[2:27], cl = trn.cl$candidate, k = 2)
+```
+
+```{r}
+# Plot shows that K = 15 is best balance of training and test error.
+# Makes training set and test set predictions using k = 15
+prediction.trn <- knn(train = trn.cl[2:27], test = trn.cl[2:27], cl = trn.cl$candidate, k = 15)
+prediction.tst <- knn(train = trn.cl[2:27], test = tst.cl[2:27], cl = trn.cl$candidate, k = 15)
+
+# Saves KNN results into records matrix
+records[2,1] <- calc_error_rate(prediction.trn, trn.cl$candidate)
+records[2,2] <- calc_error_rate(prediction.tst, tst.cl$candidate)
+records
+```
+
+```{r}
+# Melts columns for plotting
+K_Errors_yax <- melt(K_Errors, id = "K")
+# Renames observations for plot readability
+names(K_Errors_yax)[2] <- "Legend"
+levels(K_Errors_yax$Legend)<- c("Training Error", "Testing Error")
 
 
+ggplot(K_Errors_yax, aes(x = K))+ ggtitle("KNN 10-Fold Cross Validation Training and Testing Error")+ ylab("Error Rate")+geom_smooth(aes(x = K,y = value, colour = Legend), se = F) + scale_color_manual(values = c("orange","blue"))
 ```
