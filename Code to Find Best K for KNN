@@ -1,0 +1,40 @@
+```{r cache = TRUE}
+# K values for testing
+k.test = c(1, seq(10,50, length.out = 9))
+
+# Function for CV
+do.chunk <- function(chunkid, folddef, Xdat, Ydat, k){
+train = (folddef!=chunkid)
+Xtr = Xdat[train,]
+Ytr = Ydat[train]
+Xvl = Xdat[!train,]
+Yvl = Ydat[!train]
+## get classifications for current training chunks
+predYtr = knn(train = Xtr, test = Xtr, cl = Ytr, k = k)
+## get classifications for current test chunk
+predYvl = knn(train = Xtr, test = Xvl, cl = Ytr, k = k)
+# Returns a data fram of Training Error and Validation Error
+data.frame(train.error = calc_error_rate(predYtr, Ytr),
+val.error = calc_error_rate(predYvl, Yvl))
+}
+
+# Tibble of Each K value and it's Average Training and Test Errors
+K_Errors <- tibble("K" = k.test, "AveTrnError" = NA, "AveTstError" = NA)
+
+predictors <- select(trn.cl, -candidate)
+
+for(i in 1:10){
+
+temp <- plyr::ldply(1:10, do.chunk, folds,predictors, trn.cl$candidate, K_Errors$K[i])
+
+K_Errors$AveTrnError[i] <- mean(temp[,1])
+K_Errors$AveTstError[i] <- mean(temp[,2])
+}
+
+# Example Code for making Predictions Need to Graph 
+# K vs both Errors before making decision
+prediction.trn = knn(train = trn.cl[2:27], test = trn.cl[2:27], cl = trn.cl$candidate, k = 2)
+#prediction.tst <- knn(train = trn.cl[2:27], test = tst.cl[2:27], cl = trn.cl$candidate, k = 2)
+
+
+```
