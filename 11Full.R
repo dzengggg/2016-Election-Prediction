@@ -1,3 +1,4 @@
+census = read.csv("~/data/census/census.csv") %>% as.tbl
 census.del <- census
 
 # removes rows with missing data
@@ -36,3 +37,32 @@ names(census.subct)[ncol(census.subct)] <- "CountyTotal"
 # respect to how many subcounties are in the county.
 census.subct <- mutate(census.subct, CountyWeight = TotalPop/CountyTotal)
 census.subct
+
+
+census.ct <- census.subct
+
+# Creates a total weight of the county weight for averaging
+CountyWeightSum <- summarise_at(census.ct, .funs = funs(sum), .vars = vars("CountyWeight"))
+
+# Renames County Weight Total for easier reading
+names(CountyWeightSum)[ncol(CountyWeightSum)] <- "CountyWeightSum"
+
+#Attaches CountyWeightSum variable to census.ct
+census.ct <- left_join(census.ct,CountyWeightSum , by = c("State", "County"))
+
+# Revalues CountyWeight to reflect its percentage of county total weight
+census.ct <- mutate(census.ct, CountyWeight = CountyWeight/CountyWeightSum)
+
+# Removes Unnecessary Variables
+# information is already found in CountyWeight
+census.ct <- select(census.ct, -CountyWeightSum, - CountyTotal)
+
+# Applies Weightes to SubCounty Data
+census.ct[5:28] <- census.ct[5:28]*census.ct$CountyWeight
+
+# Aggregates population weighted subcounty data into County data
+census.ct_temp <- census.ct %>% summarise_all(sum)
+
+# Removes CountyWeight variable: it's no longer necessary
+census.ct <- select(census.ct, -CountyWeight)
+
