@@ -61,8 +61,10 @@ census.ct <- select(census.ct, -CountyWeightSum, - CountyTotal)
 census.ct[5:28] <- census.ct[5:28]*census.ct$CountyWeight
 
 # Aggregates population weighted subcounty data into County data
-census.ct_temp <- census.ct %>% summarise_all(sum)
+census.ct <- census.ct %>% summarise_all(sum)
 
 # Removes CountyWeight variable: it's no longer necessary
-census.ct <- select(census.ct, -CountyWeight)
+census.ct <- select(census.ct, -CountyWeight, -CensusTract)
+
+head(census.ct)
 
