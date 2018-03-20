@@ -18,13 +18,13 @@ TO DO:
 ### TYPE YOUR NAME NEXT TO STUFF YOU WANT TO DO
 
 
-16
+16 <- Suggested Santino Does because of his familiarity with PCA code
 
-17
+17  <- Free grabs to who's understands PCAs comfortably
 
-18
+18 Daniel <- chosen because familiar with Tree Code
 
-19
+19 Bidal <- chosen because familiar with KNN code
 
 20
 
