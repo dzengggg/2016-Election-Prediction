@@ -107,6 +107,33 @@ ggplot(data = county) +
 ```
 
 
+
+
+8.
+```{r} 
+states=states%>%mutate(fips=state.abb[match(states$region,tolower(state.name) )])
+
+states=left_join(states, state_winner, by="fips")
+ggplot(data = states) + 
+  geom_polygon(aes(x = long, y = lat, fill = states$candidate, group = group),colour="white" ) + 
+  coord_fixed(1.3) +
+  guides(fill=FALSE)
+  ```
+9.
+```{r} 
+countyseperate=separate(maps::county.fips,polyname,c("region", "subregion"),sep="," )
+countyjoined=left_join(countyseperate,county,by=c("region", "subregion"))
+countyjoined$fips=as.factor(countyjoined$fips)
+newcounty=left_join(countyjoined,county_winner)
+
+
+
+ggplot(data = newcounty) + 
+  geom_polygon(aes(x = long, y = lat, fill = newcounty$candidate, group = group),colour="white" ) + 
+  coord_fixed(1.3) +
+  guides(fill=FALSE)
+```
+
 11.
 ```{r Creates census.del}
 census.del <- census
@@ -182,7 +209,15 @@ census.ct <- select(census.ct, -CountyWeight, -CensusTract)
 head(census.ct)
 
 ```
-
+12.
+```{r}
+numericcensus.ct=select(ungroup(census.ct),-State,-County)
+Ccensus.pc=prcomp(scale(numericcensus.ct)) 
+ ct.pc=Ccensus.pc$rotation[,c(1,2)]
+numericcensus.subct=select(ungroup(census.subct), -County , -State,-CensusTract)
+Sbcensus.pc=prcomp(scale(numericcensus.subct))
+subct.pc=Sbcensus.pc$rotation[,c(1,2)]
+```
 
 ```{r}
 tmpwinner = county_winner %>% ungroup %>%
