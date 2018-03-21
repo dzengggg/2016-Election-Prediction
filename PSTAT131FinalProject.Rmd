@@ -202,12 +202,9 @@ census.ct[5:28] <- census.ct[5:28]*census.ct$CountyWeight
 # Aggregates population weighted subcounty data into County data
 census.ct <- census.ct %>% summarise_at(vars(TotalPop:Unemployment), funs(sum))
 
-# Removes CountyWeight variable: it's no longer necessary
-# Also Removes CensusTract as it is not a summable unit
-census.ct <- select(census.ct, -CountyWeight, -CensusTract)
+census.ct <- ungroup(census.ct)
 
 head(census.ct)
-
 ```
 12.
 ```{r}
@@ -233,10 +230,9 @@ tmpwinner = county_winner %>% ungroup %>%
   mutate(state = state.name[match(state, state.abb)]) %>%               ## state abbreviations
   mutate_at(vars(state, county), tolower) %>%                           ## to all lowercase
   mutate(county = gsub(" county| columbia| city| parish", "", county))  ## remove suffixes
-census.tolower <- census.ct
-census.tolower$State <- tolower(census.tolower$State)
-census.tolower$County <- tolower(census.tolower$County)
-tmpcensus <- census.tolower
+
+tmpcensus = census.ct %>% mutate_at(vars(State, County), tolower)
+
 
 election.cl = tmpwinner %>%
   left_join(tmpcensus, by = c("state"="State", "county"="County")) %>% 
