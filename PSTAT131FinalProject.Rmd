@@ -211,12 +211,21 @@ head(census.ct)
 ```
 12.
 ```{r}
+#pca only works on numeric thus we remove state and county 
+# must ungroup data first then must scale 
+
 numericcensus.ct=select(ungroup(census.ct),-State,-County)
-Ccensus.pc=prcomp(scale(numericcensus.ct)) 
- ct.pc=Ccensus.pc$rotation[,c(1,2)]
+ct.pc=prcomp(scale(numericcensus.ct))
+
+# most prominent loading for county 
+ ct.pc2=Ccensus.pc$rotation[,c(1,2)]
+ 
+ # must make subcounty only have numeric 
+ # first must ungroup then scale 
 numericcensus.subct=select(ungroup(census.subct), -County , -State,-CensusTract)
-Sbcensus.pc=prcomp(scale(numericcensus.subct))
-subct.pc=Sbcensus.pc$rotation[,c(1,2)]
+subct.pc=prcomp(scale(numericcensus.subct))
+# most prominent loadings 
+subct.pc2=ct.pc$rotation[,c(1,2)]
 ```
 
 ```{r}
