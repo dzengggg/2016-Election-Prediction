@@ -263,7 +263,21 @@ records = matrix(NA, nrow=3, ncol=2)
 colnames(records) = c("train.error","test.error")
 rownames(records) = c("tree","knn","lda")
 ```
-14.
+14. 
+```{r}
+candidate.tree <- tree(candidate ~ ., data = trn.cl)
+cv <- cv.tree(candidate.tree, rand = folds, FUN = prune.misclass, K = nfold)
+min.dev <- min(cv$dev)
+best.size.cv <- cv$size[which(cv$dev == min.dev)]
+draw.tree(candidate.tree)
+tree.pruned <- prune.misclass(candidate.tree, best = best.size.cv)
+draw.tree(tree.pruned)
+tree.train <- predict(tree.pruned, trn.cl, type = "class")
+tree.test <- predict(tree.pruned, tst.cl, type = "class")
+records[1,1] <- calc_error_rate(tree.train, trn.cl$candidate)
+records[1,2] <- calc_error_rate(tree.test, tst.cl$candidate)
+```
+15.
 ```{r cache = T}
 # K values for testing
 k.test = c(1, seq(10,50, length.out = 9))
