@@ -95,7 +95,14 @@ state.pct <- mutate(join.state, pct = votes/total)
 state_winner <- top_n(state.pct, n= 1)
 
 ```
+```{r}
+states = map_data("state")
 
+ggplot(data = states) + 
+  geom_polygon(aes(x = long, y = lat, fill = region, group = group), color = "white") + 
+  coord_fixed(1.3) +
+  guides(fill=FALSE) 
+```
 7.
 ```{r}
 county = map_data("county")
@@ -349,4 +356,18 @@ prediction.tst <- knn(train = trn.cl[2:27], test = tst.cl[2:27], cl = trn.cl$can
 records[2,1] <- calc_error_rate(prediction.trn, trn.cl$candidate)
 records[2,2] <- calc_error_rate(prediction.tst, tst.cl$candidate)
 records
+```
+```{r}
+pca.records = matrix(NA, nrow=3, ncol=2)
+colnames(pca.records) = c("train.error","test.error")
+rownames(pca.records) = c("tree","knn","lda")
+```
+16.
+```{r}
+pca.train.numeric <- select(trn.cl, -candidate)
+pr.pca.train <- prcomp(scale(pca.train.numeric))
+train.var <- pr.pca.train$sdev^2
+train.pve <- train.var/sum(train.var)
+plot(cumsum(train.pve), type = 'b')
+which.min(abs(cumsum(train.pve)-0.905))
 ```
