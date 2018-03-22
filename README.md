@@ -3,7 +3,7 @@ PSTAT 131 Data Mining Project
 
 ## When downloading the code, don't forget to change your directories when referencing the data tables
 
-PROGRESS: 1 - 9, 10 - 12, 14 - 15 COMPLETE (14 is a little sus, but the fixes are mainly some tweaking)
+PROGRESS: 1 - 9, 10 - 12, 14 - 16 COMPLETE (14 is a little sus, but the fixes might mainly some tweaking if at all)
 
 
 TO DO:
@@ -13,8 +13,6 @@ TO DO:
 
 ### TYPE YOUR NAME NEXT TO STUFF YOU WANT TO DO
 
-
-16 <- Suggested Santino Does because of his familiarity with PCA code
 
 17  <- Free grabs to who's understands PCAs comfortably
 
