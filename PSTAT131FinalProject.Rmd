@@ -419,3 +419,41 @@ pca.tree.test <- predict(pca.tree.pruned, test.pca, type = "class")
 pca.records[1,1] <- calc_error_rate(pca.tree.train, tr.pca$y)
 pca.records[1,2] <- calc_error_rate(pca.tree.test, test.pca$y)
 ```
+
+19.
+```{r}
+```{r}
+pca.K_Errors <- tibble("K" = k.test, "AveTrnError" = NA, "AveTstError" = NA)
+pca.predictors <- select(tr.pca, -y)
+
+for(i in 1:10){
+
+temp <- plyr::ldply(1:10, do.chunk, folds,pca.predictors, tr.pca$y, pca.K_Errors$K[i])
+
+pca.K_Errors$AveTrnError[i] <- mean(temp[,1])
+pca.K_Errors$AveTstError[i] <- mean(temp[,2])
+}
+
+# Melts columns for plotting
+pca.K_Errors_yax <- melt(pca.K_Errors, id = "K")
+# Renames observations for plot readability
+names(pca.K_Errors_yax)[2] <- "Legend"
+levels(pca.K_Errors_yax$Legend)<- c("Training Error", "Testing Error")
+
+
+ggplot(pca.K_Errors_yax, aes(x = K))+ ggtitle("KNN 10-Fold Cross Validation Training and Testing Error Using 13 Principal Components")+ ylab("Error Rate")+geom_smooth(aes(x = K,y = value, colour = Legend), se = F) + scale_color_manual(values = c("orange","blue"))
+```
+
+```{r}
+# Again, the plot shows that K = 15 is best balance of training and test error.
+
+# Makes training set and test set predictions using k = 15
+prediction.tr.pca <- knn(train = tr.pca[-1], test = tr.pca[-1], cl = tr.pca$y, k = 15)
+prediction.ts.pca <- knn(train = tr.pca[-1], test = test.pca[-1], cl = tr.pca$y, k = 15)
+
+# Saves KNN results into records matrix
+records[2,1] <- calc_error_rate(prediction.trn, trn.cl$candidate)
+records[2,2] <- calc_error_rate(prediction.tst, tst.cl$candidate)
+records
+
+```
