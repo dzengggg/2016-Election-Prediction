@@ -254,25 +254,27 @@ subct.pc2=ct.pc$rotation[,c(1,2)]
 13.
 ```{r}
 
- distanceCensus=dist(scale(numericcensus.ct)) 
+ distanceCensus=dist(numericcensus.ct) 
  census.hcComp=hclust(distanceCensus, "complete")
  census.hc10=cutree(census.hcComp,k=10)
    
- census.pc5= ct.pc$x[,c(1,5)]
+ census.pc5= ct.pc$x[,1:5]
  distcensus.pc5=dist(census.pc5)
  census.pcahcComp=hclust(distcensus.pc5, "complete")
  census.pcahc10=cutree(census.pcahcComp,k=10)
  
- plot( census.hc10, col=census.hc10,
+ SanMateo.Pos <- which(census.ct$County == "San Mateo")
+ 
+ plot( scale(numericcensus.ct), col=census.hc10,
        main="Hierarchical Clustering on County", 
-       sub="clusters=10 ")
-
- plot(census.pcahc10,col=census.pcahc10, 
+       sub="clusters=10")
+ scalednumct <- scale(numericcensus.ct)
+ scalednumct <- as.data.frame(scalednumct)
+ abline(v = scalednumct$TotalPop[SanMateo.Pos], col = "blue")
+ plot(ct.pc$x[,1:5],col=census.pcahc10, 
       main="Hierarchical Clustering on County with  5 Principal Components", 
       sub="clusters=10" )
-
-
-
+ abline(v = ct.pc$x[SanMateo.Pos,1], col = "blue")
 
 ```
 ```{r}
