@@ -371,3 +371,12 @@ train.pve <- train.var/sum(train.var)
 plot(cumsum(train.pve), type = 'b')
 which.min(abs(cumsum(train.pve)-0.905))
 ```
+17.
+```{r}
+# Creating PCA data frame for training data
+tr.pca <- bind_cols(y = trn.cl$candidate, z = as.data.frame(pr.pca.train$x))
+pca.test.numeric <- select(tst.cl, -candidate)
+pr.pca.test <- prcomp(scale(pca.test.numeric))
+# Creating PCA data frame for test data
+test.pca <- bind_cols(y = tst.cl$candidate, z = as.data.frame(pr.pca.test$x))
+```
