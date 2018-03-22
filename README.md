@@ -3,15 +3,12 @@ PSTAT 131 Data Mining Project
 
 ## When downloading the code, don't forget to change your directories when referencing the data tables
 
-PROGRESS: 1 - 9, 11, 14 - 15 COMPLETE (14 is a little sus, but the fixes are mainly some tweaking)
+PROGRESS: 1 - 9, 10 - 12, 14 - 15 COMPLETE (14 is a little sus, but the fixes are mainly some tweaking)
 
 
 TO DO:
 
-12, 13: Santino
-
-10: Daniel (help me pls)
-
+13: Santino
 
 
 ### TYPE YOUR NAME NEXT TO STUFF YOU WANT TO DO
