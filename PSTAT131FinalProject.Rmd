@@ -133,7 +133,27 @@ ggplot(data = newcounty) +
   coord_fixed(1.3) +
   guides(fill=FALSE)
 ```
+10.
+```{r}
+library(ggplot2)
+poverty.group <- group_by(census, County)
+mean.poverty <- summarise(poverty.group, AvgPoverty = mean(Poverty))
+mean.poverty <- na.omit(mean.poverty)
+mean.poverty$StndrdPov <- ((mean.poverty$AvgPoverty - mean(mean.poverty$AvgPoverty))/sd(mean.poverty$AvgPoverty))
+mean.poverty$PovertyLine <- ifelse(mean.poverty$StndrdPov < 0, 'below', 'above')
+mean.poverty <- mean.poverty[order(mean.poverty$StndrdPov),]
+mean.poverty$County <- factor(mean.poverty$County, levels = mean.poverty$County)
 
+theme_set(theme_bw())  
+ggplot(mean.poverty, aes(x=County, y=StndrdPov, label=StndrdPov)) + 
+  geom_bar(stat='identity', aes(fill=PovertyLine), width=1)  +
+  scale_fill_manual(name="Poverty Rate Average In America", 
+                    labels = c("Above Average", "Below Average"), 
+                    values = c("above"="#00ba38", "below"="#f8766d")) + 
+  labs(subtitle="Normalised poverty rate in counties", 
+       title= "Diverging Bars") + 
+  coord_flip()
+```
 11.
 ```{r Creates census.del}
 census.del <- census
