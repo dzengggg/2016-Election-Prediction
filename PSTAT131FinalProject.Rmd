@@ -380,3 +380,17 @@ pr.pca.test <- prcomp(scale(pca.test.numeric))
 # Creating PCA data frame for test data
 test.pca <- bind_cols(y = tst.cl$candidate, z = as.data.frame(pr.pca.test$x))
 ```
+18.
+```{r}
+pca.tree <- tree(y ~ ., data = tr.pca)
+cv.pca <- cv.tree(pca.tree, rand = folds, FUN = prune.misclass, K = nfold)
+pca.min.dev <- min(cv.pca$dev)
+bestpca.size.cv <- cv.pca$size[which(cv.pca$dev == pca.min.dev)]
+draw.tree(pca.tree)
+pca.tree.pruned <- prune.misclass(pca.tree, best = bestpca.size.cv)
+draw.tree(pca.tree.pruned)
+pca.tree.train <- predict(pca.tree.pruned, tr.pca, type = "class")
+pca.tree.test <- predict(pca.tree.pruned, test.pca, type = "class")
+pca.records[1,1] <- calc_error_rate(pca.tree.train, tr.pca$y)
+pca.records[1,2] <- calc_error_rate(pca.tree.test, test.pca$y)
+```
