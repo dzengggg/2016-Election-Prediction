@@ -505,9 +505,6 @@ predicted_candidates <- predict(tree.pruned, mapping_election[4:30], type = "cla
 
 
 prediction_map <- county
-# prediction_mapper <- bind_cols(predicted = predicted_candidates,z = mapping_election)
-# prediction_mappest <-left_join(prediction_map,prediction_mapper, by = c("region", "subregion"))
-
 
 prediction_mapper <- bind_cols(predicted = predicted_candidates,z = mapping_election)
 
