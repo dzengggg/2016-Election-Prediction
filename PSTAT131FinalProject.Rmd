@@ -536,4 +536,9 @@ cutoff.train <- performance(logistic.train.prediction, "fpr")@x.values[[1]]
 fnr.train <- performance(logistic.train.prediction, "fnr")@y.values[[1]]
 library(graphics)
 matplot(cutoff.train, cbind(fpr.train, fnr.train), lwd = 2, xlab = "Threshold", ylab = "Error Rate")
+train.rate <- as.data.frame(cbind(Cutoff = cutoff.train, FPR = fpr.train, FNR = fnr.train))
+train.rate$distance <- sqrt((train.rate[,2]^2) +(train.rate[,3])^2)
+index = which.min(train.rate$distance)
+best = train.rate$Cutoff[index]
+best
 ```
