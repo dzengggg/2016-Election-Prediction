@@ -317,6 +317,9 @@ election.cl = tmpwinner %>%
   left_join(tmpcensus, by = c("state"="State", "county"="County")) %>% 
   na.omit
 
+# Creates a variable to be used in later mappings
+mapping.cl <- select(election.cl, -c(pct, fips))
+
 ## saves meta information to attributes
 attr(election.cl, "location") = election.cl %>% select(c(county, fips, state, votes, pct))
 election.cl = election.cl %>% select(-c(county, fips, state, votes, pct))
