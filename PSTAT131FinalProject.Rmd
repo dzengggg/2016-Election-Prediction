@@ -1,5 +1,5 @@
 ---
-title: "PSTAT 131 PRoject"
+title: "PSTAT 131 Project"
 author: "Bidal Orozco, Daniel Zeng, Santino Gonzalez"
 date: "March 18, 2018"
 output: html_document
