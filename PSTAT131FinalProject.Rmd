@@ -2,7 +2,9 @@
 title: "PSTAT 131 Project"
 author: "Bidal Orozco, Daniel Zeng, Santino Gonzalez"
 date: "March 18, 2018"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -26,12 +28,7 @@ library(class)
 library(reshape2)
 ```
 
-1. What makes voter behavior prediction (and thus election forecasting) a hard problem?
-
-  Voter behavior prediction can only be as accurate as the data collected for the prediction. Something to worry about when polling for election data is people lying about their preferences. For 2016 in particular the candidates were highly unpopular and so exit polls may have not represented people's true feelings. 
-  
-  
-  1.Voter prediction is difficult because the data necessary for is usually conducted through polls. As a result, polls can be a problematic source of data First, there can be a bias in the data collection process (sample being truly representative of voting population on election day). This bias can be a no response bias or it can be a result of people being polled responding to polls but not end up voting on election day.  Second, people may provide false data to polls if they feel like their decision may be judged.  Third, voter opinion can change from the time of the poll to election day. Lastly, decisions on variables used for analysis is crucial for forecasting and presents another difficulty for forecasters. 
+ 1.Voter prediction is difficult because the data necessary for is usually conducted through polls. As a result, polls can be a problematic source of data First, there can be a bias in the data collection process (sample being truly representative of voting population on election day). This bias can be a no response bias or it can be a result of people being polled responding to polls but not end up voting on election day.  Second, people may provide false data to polls if they feel like their decision may be judged.  Third, voter opinion can change from the time of the poll to election day. Lastly, decisions on variables used for analysis is crucial for forecasting and presents another difficulty for forecasters. 
 
 2.
 Silver is unique in his methodology in how his strong use in statistics such as time series, Bayesian probability, hierarchical clustering, and graph theory heavily within his analysis.  As a result, Silver accounts for many of the problems mentioned in problem 1. He made sure to estimating the error of polls themselves to help mitigate the issue of bias in polls. He also used daily simulations to estimate the change in public voting on a day by day basis and using these simulations as predictions for possible conditions on election day. The hierarchical clustering method he used is useful because that is adjust predictions for states based on how states with similar demographics are responding to polls. 
@@ -39,16 +36,14 @@ Silver is unique in his methodology in how his strong use in statistics such as 
 3.
 In 2016 polls had a high bias towards Hillary Clinton winning the elections. It is speculated that polls did not account for many of the Trump voters in their polls (either through people giving false information or being a “shy Trumper”) as well as the overwhelming large number of people who would vote on election day for Trump. 
 
-  
-  
-  
+
   
 ```{r}
-election.raw = read.csv("C:/Users/Junior/Desktop/Education/Winter 2018/PSTAT 131slash231/131FinalProject/final-project/data/election/election.csv") %>% as.tbl
+election.raw = read.csv("~/final-project/data/election/election.csv") %>% as.tbl
 
-census_meta = read.csv("C:/Users/Junior/Desktop/Education/Winter 2018/PSTAT 131slash231/131FinalProject/final-project/data/census/metadata.csv", sep = ";") %>% as.tbl
+census_meta = read.csv("~/final-project/data/census/metadata.csv", sep = ";") %>% as.tbl
 
-census = read.csv("C:/Users/Junior/Desktop/Education/Winter 2018/PSTAT 131slash231/131FinalProject/final-project/data/census/census.csv") %>% as.tbl
+census = read.csv("~/final-project/data/census/census.csv") %>% as.tbl
 
 census$CensusTract = as.factor(census$CensusTract)
 
@@ -95,19 +90,26 @@ ggplot(Candidate_Votes, aes(candidate, percentage)) +
 
 6.
 ```{r}
+# Grouping counties by fips
 county.group <- group_by(election, fips)
-total.group <- summarize(county.group, total = sum(votes))
+# Taking the total votes per fips
+total.group <- dplyr::summarize(county.group, total = sum(votes))
+# Matching the total votes to their respective counties
 count.group <- left_join(county.group, total.group, by = "fips")
+# Adding percent variable
 county.pct <- mutate(count.group, pct = votes/total)       
+# Selecting winners for each county
 county_winner <- top_n(county.pct, n =1)
 
+# Repeating above for states
 state.group <- group_by(election_state, state)
-total.stqte <- summarize(state.group, total = sum(votes))
+total.stqte <- dplyr::summarize(state.group, total = sum(votes))
 join.state <- left_join(state.group, total.stqte, by = "state")
 state.pct <- mutate(join.state, pct = votes/total)
 state_winner <- top_n(state.pct, n= 1)
 
 ```
+
 ```{r}
 states = map_data("state")
 
@@ -131,22 +133,22 @@ ggplot(data = county) +
 
 8.
 ```{r} 
+# Adding fips variable to the states in ggmap
 states=states%>%mutate(fips=state.abb[match(states$region,tolower(state.name) )])
-
 states=left_join(states, state_winner, by="fips")
+
 ggplot(data = states) + 
   geom_polygon(aes(x = long, y = lat, fill = states$candidate, group = group),colour="white" ) + 
   coord_fixed(1.3) +
   guides(fill=FALSE)
-  ```
+```
 9.
 ```{r} 
+# Matching winners onto counties in ggmap
 countyseperate=separate(maps::county.fips,polyname,c("region", "subregion"),sep="," )
 countyjoined=left_join(countyseperate,county,by=c("region", "subregion"))
 countyjoined$fips=as.factor(countyjoined$fips)
 newcounty=left_join(countyjoined,county_winner)
-
-
 
 ggplot(data = newcounty) + 
   geom_polygon(aes(x = long, y = lat, fill = newcounty$candidate, group = group),colour="white" ) + 
@@ -154,14 +156,21 @@ ggplot(data = newcounty) +
   guides(fill=FALSE)
 ```
 10.
-```{r}
+```{r fig.width = 10, fig.height = 10}
 library(ggplot2)
+# Grouping by poverty
 poverty.group <- group_by(census, County)
-mean.poverty <- summarise(poverty.group, AvgPoverty = mean(Poverty))
+# Calculating the mean poverty per county
+mean.poverty <- dplyr::summarise(poverty.group, AvgPoverty = mean(Poverty))
+# Taking out the missing values
 mean.poverty <- na.omit(mean.poverty)
+# Standardizing mean poverty rates
 mean.poverty$StndrdPov <- ((mean.poverty$AvgPoverty - mean(mean.poverty$AvgPoverty))/sd(mean.poverty$AvgPoverty))
+# Classifying variables into two factors
 mean.poverty$PovertyLine <- ifelse(mean.poverty$StndrdPov < 0, 'below', 'above')
+# Ordering data set
 mean.poverty <- mean.poverty[order(mean.poverty$StndrdPov),]
+# Converting into factors for graphing purposes
 mean.poverty$County <- factor(mean.poverty$County, levels = mean.poverty$County)
 
 theme_set(theme_bw())  
@@ -172,10 +181,11 @@ ggplot(mean.poverty, aes(x=County, y=StndrdPov, label=StndrdPov)) +
                     values = c("above"="#00ba38", "below"="#f8766d")) + 
   labs(subtitle="Normalised poverty rate in counties", 
        title= "Diverging Bars") + 
-  coord_flip()
+  coord_flip() +
+   theme(axis.text.y = element_blank())
 ```
 11.
-```{r Creates census.del}
+```{r Creates census.del, results = "hide"}
 census.del <- census
 
 # removes rows with missing data
@@ -201,7 +211,7 @@ census.del <- census.del %>% select(-Women,-White)
 census.del
 ```
 
-```{r Creates census.subct}
+```{r Creates census.subct, results = "hide"}
 # Creates census sub-county variable and groups tibble by
 # State and County
 census.subct <- group_by(census.del,State, County)
@@ -217,7 +227,7 @@ census.subct <- mutate(census.subct, CountyWeight = TotalPop/CountyTotal)
 census.subct
 ```
 
-```{r Creates census.ct}
+```{r Creates census.ct, results = "hide"}
 census.ct <- census.subct
 
 # Creates a total weight of the county weight for averaging
@@ -256,6 +266,7 @@ ct.pc=prcomp(scale(numericcensus.ct))
 
 # most prominent loading for county 
  ct.pc2=ct.pc$rotation[,c(1,2)]
+ ct.pc2
  
  # must make subcounty only have numeric 
  # first must ungroup then scale 
@@ -263,6 +274,7 @@ numericcensus.subct=select(ungroup(census.subct), -County , -State,-CensusTract)
 subct.pc=prcomp(scale(numericcensus.subct))
 # most prominent loadings 
 subct.pc2=ct.pc$rotation[,c(1,2)]
+subct.pc2
 ```
 13.
 ```{r}
@@ -290,6 +302,8 @@ subct.pc2=ct.pc$rotation[,c(1,2)]
  abline(v = ct.pc$x[SanMateo.Pos,1], col = "blue")
 
 ```
+The blue line here indicates the location of San Mateo county in our scatter plot. We can see that the cluster it has been assigned to differs between the core component data and the PCA form of our data. At the same time however, in the PCA cluster graph we see that there is overlap with the cluster that San Mateo belongs to in the core component cluster. This difference in assignment can be attributed to the dimensionalty reduction caused by PCA. It is likely that the altering of distances slightly affected the San Mateo observation to be classified into a different cluster. However, the potential overlap tells us that the changes present from the transition were not extreme either. 
+
 ```{r}
 tmpwinner = county_winner %>% ungroup %>%
   mutate(state = state.name[match(state, state.abb)]) %>%               ## state abbreviations
@@ -330,13 +344,14 @@ candidate.tree <- tree(candidate ~ ., data = trn.cl)
 cv <- cv.tree(candidate.tree, rand = folds, FUN = prune.misclass, K = nfold)
 min.dev <- min(cv$dev)
 best.size.cv <- cv$size[which(cv$dev == min.dev)]
-draw.tree(candidate.tree)
+draw.tree(candidate.tree, cex = 0.55)
 tree.pruned <- prune.misclass(candidate.tree, best = best.size.cv)
-draw.tree(tree.pruned)
+draw.tree(tree.pruned, cex = 0.5)
 tree.train <- predict(tree.pruned, trn.cl, type = "class")
 tree.test <- predict(tree.pruned, tst.cl, type = "class")
 records[1,1] <- calc_error_rate(tree.train, trn.cl$candidate)
 records[1,2] <- calc_error_rate(tree.test, tst.cl$candidate)
+records
 ```
 15.
 ```{r cache = T}
@@ -406,7 +421,7 @@ pca.train.numeric <- select(trn.cl, -candidate)
 pr.pca.train <- prcomp(scale(pca.train.numeric))
 train.var <- pr.pca.train$sdev^2
 train.pve <- train.var/sum(train.var)
-plot(cumsum(train.pve), type = 'b')
+plot(cumsum(train.pve), type = 'b', main = "PVE Explained by PCA", ylab = "Cumulative PVE")
 which.min(abs(cumsum(train.pve)-0.905))
 ```
 17.
@@ -424,13 +439,14 @@ pca.tree <- tree(y ~ ., data = tr.pca)
 cv.pca <- cv.tree(pca.tree, rand = folds, FUN = prune.misclass, K = nfold)
 pca.min.dev <- min(cv.pca$dev)
 bestpca.size.cv <- cv.pca$size[which(cv.pca$dev == pca.min.dev)]
-draw.tree(pca.tree)
+draw.tree(pca.tree, cex = 0.5)
 pca.tree.pruned <- prune.misclass(pca.tree, best = bestpca.size.cv)
-draw.tree(pca.tree.pruned)
+draw.tree(pca.tree.pruned, cex = 0.7)
 pca.tree.train <- predict(pca.tree.pruned, tr.pca, type = "class")
 pca.tree.test <- predict(pca.tree.pruned, test.pca, type = "class")
 pca.records[1,1] <- calc_error_rate(pca.tree.train, tr.pca$y)
 pca.records[1,2] <- calc_error_rate(pca.tree.test, test.pca$y)
+pca.records
 ```
 
 19.
