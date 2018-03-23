@@ -524,3 +524,19 @@ ggplot(data = prediction_mappest) +
   
 ```
 Something that we have gathered from this data was that it is very hard to make these predictions based on just the demographics we had. If it were feasible, we would want to consider trying to take in more data about peoples political preferences such as their stance on certain issues and extrapolating those preferences out to the county level. We would also want to have a county's voting history in the past and see if those can give us better groupings within our demographics. With our given classification methods we were slightly limited, they are fine as they are but we would like to try and get our error percentages under 10%. Another thing to try would be to do the predictions again but on the subcounty level. However, we did not have the processing power for this method.
+
+21. 
+```{r}
+# Logistic Regression
+logistic.model.core <- glm(candidate ~ ., data = trn.cl, family = "binomial")
+logistic.train.predict <- predict(logistic.model.core, trn.cl, type = "response")
+trn.cl <- trn.cl %>% mutate(candidate = as.factor(ifelse(candidate == "Donald Trump", "Donald Trump", "Hillary Clinton")))
+logistic.train.prediction <- prediction(logistic.train.predict, trn.cl$candidate)
+# FPR
+fpr.train = performance(logistic.train.prediction, "fpr")@y.values[[1]]
+cutoff.train <- performance(logistic.train.prediction, "fpr")@x.values[[1]]
+# FNR
+fnr.train <- performance(logistic.train.prediction, "fnr")@y.values[[1]]
+library(graphics)
+matplot(cutoff.train, cbind(fpr.train, fnr.train), lwd = 2, xlab = "Threshold", ylab = "Error Rate")
+```
