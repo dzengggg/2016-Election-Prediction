@@ -540,5 +540,14 @@ train.rate <- as.data.frame(cbind(Cutoff = cutoff.train, FPR = fpr.train, FNR = 
 train.rate$distance <- sqrt((train.rate[,2]^2) +(train.rate[,3])^2)
 index = which.min(train.rate$distance)
 best = train.rate$Cutoff[index]
-best
+
+# Classifying our logistic model predictions based off of our ideal threshold
+trn.cl.pred <- trn.cl %>% mutate(predCandidate = as.factor(ifelse(logistic.train.predict <= best, "Donald Trump", "Hillary Clinton")))
+logistic.train.error <- calc_error_rate(trn.cl.pred$candidate, trn.cl.pred$predCandidate)
+logistic.train.error
+logistic.test.predict <- predict(logistic.model.core, tst.cl, type = "response")
+tst.cl <- tst.cl %>% mutate(candidate = as.factor(ifelse(candidate == "Donald Trump", "Donald Trump", "Hillary Clinton")))
+tst.cl.pred <- tst.cl %>% mutate(predCandidate = as.factor(ifelse(logistic.test.predict <= best, "Donald Trump", "Hillary Clinton")))
+logistic.test.error <- calc_error_rate(tst.cl.pred$candidate, tst.cl.pred$predCandidate)
+logistic.test.error
 ```
