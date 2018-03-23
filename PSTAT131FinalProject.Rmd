@@ -30,6 +30,19 @@ library(reshape2)
 
   Voter behavior prediction can only be as accurate as the data collected for the prediction. Something to worry about when polling for election data is people lying about their preferences. For 2016 in particular the candidates were highly unpopular and so exit polls may have not represented people's true feelings. 
   
+  
+  1.Voter prediction is difficult because the data necessary for is usually conducted through polls. As a result, polls can be a problematic source of data First, there can be a bias in the data collection process (sample being truly representative of voting population on election day). This bias can be a no response bias or it can be a result of people being polled responding to polls but not end up voting on election day.  Second, people may provide false data to polls if they feel like their decision may be judged.  Third, voter opinion can change from the time of the poll to election day. Lastly, decisions on variables used for analysis is crucial for forecasting and presents another difficulty for forecasters. 
+
+2.
+Silver is unique in his methodology in how his strong use in statistics such as time series, Bayesian probability, hierarchical clustering, and graph theory heavily within his analysis.  As a result, Silver accounts for many of the problems mentioned in problem 1. He made sure to estimating the error of polls themselves to help mitigate the issue of bias in polls. He also used daily simulations to estimate the change in public voting on a day by day basis and using these simulations as predictions for possible conditions on election day. The hierarchical clustering method he used is useful because that is adjust predictions for states based on how states with similar demographics are responding to polls. 
+
+3.
+In 2016 polls had a high bias towards Hillary Clinton winning the elections. It is speculated that polls did not account for many of the Trump voters in their polls (either through people giving false information or being a “shy Trumper”) as well as the overwhelming large number of people who would vote on election day for Trump. 
+
+  
+  
+  
+  
 ```{r}
 election.raw = read.csv("C:/Users/Junior/Desktop/Education/Winter 2018/PSTAT 131slash231/131FinalProject/final-project/data/election/election.csv") %>% as.tbl
 
