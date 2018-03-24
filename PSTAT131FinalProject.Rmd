@@ -504,6 +504,7 @@ names(mapping_election)[c(1,3)] <- c("subregion", "region")
 predicted_candidates <- predict(tree.pruned, mapping_election[4:30], type = "class")
 
 
+
 prediction_map <- county
 
 prediction_mapper <- bind_cols(predicted = predicted_candidates,z = mapping_election)
@@ -549,4 +550,57 @@ tst.cl <- tst.cl %>% mutate(candidate = as.factor(ifelse(candidate == "Donald Tr
 tst.cl.pred <- tst.cl %>% mutate(predCandidate = as.factor(ifelse(logistic.test.predict <= best, "Donald Trump", "Hillary Clinton")))
 logistic.test.error <- calc_error_rate(tst.cl.pred$candidate, tst.cl.pred$predCandidate)
 logistic.test.error
+```
+
+```{r}
+
+#Logistic Regression on PCA 13
+#Used PCA 13 terms b/c min num of PCA that explains 90% of variance 
+
+tr.pca13=tr.pca[,1:14]
+logistic.pcamodel.core <- glm(y ~ ., data = tr.pca13, family = "binomial")
+# soft classifiers from equation on training 
+logistic.pcatrain.predict <- predict(logistic.pcamodel.core, tr.pca13, type = "response")
+
+#
+tr.pca13<- tr.pca13 %>% mutate(y = as.factor(ifelse(y == "Donald Trump", "Donald Trump", "Hillary Clinton")))
+logistic.pcatrain.prediction <- prediction(logistic.pcatrain.predict, tr.pca13$y)
+
+
+# FPR
+fpr.pcatrain = performance(logistic.pcatrain.prediction, "fpr")@y.values[[1]]
+cutoff.pcatrain <- performance(logistic.pcatrain.prediction, "fpr")@x.values[[1]]
+
+
+# FNR
+fnr.pcatrain <- performance(logistic.pcatrain.prediction, "fnr")@y.values[[1]]
+
+matplot(cutoff.pcatrain, cbind(fpr.pcatrain, fnr.pcatrain), lwd = 2, xlab = "Threshold", ylab = "Error Rate")
+
+train.pcarate <- as.data.frame(cbind(Cutoff = cutoff.pcatrain, FPR = fpr.pcatrain, FNR = fnr.pcatrain))
+
+train.pcarate$distance <- sqrt((train.pcarate[,2]^2) +(train.pcarate[,3])^2)
+index.pca = which.min(train.pcarate$distance)
+best.pca = train.pcarate$Cutoff[index.pca]
+
+# Classifying our logistic model predictions based off of our ideal threshold
+trn.pcacl.pred <- tr.pca13 %>% mutate(predCandidate = as.factor(ifelse(logistic.pcatrain.predict <= best.pca, "Donald Trump", "Hillary Clinton")))
+logistic.pcatrain.error <- calc_error_rate(trn.pcacl.pred$y, trn.pcacl.pred$predCandidate)
+logistic.pcatrain.error
+
+
+
+#building test set using pca 13
+
+tst.pca13=test.pca[,1:14]
+
+
+logistic.pcatest.predict <- predict(logistic.pcamodel.core, tst.pca13, type = "response")
+tst.pca13 <- tst.pca13 %>% mutate(y = as.factor(ifelse(y == "Donald Trump", "Donald Trump", "Hillary Clinton")))
+tst.pcacl.pred <- tst.pca13%>% mutate(predCandidate = as.factor(ifelse(logistic.pcatest.predict <= best.pca, "Donald Trump", "Hillary Clinton")))
+logistic.pcatest.error <- calc_error_rate(tst.pcacl.pred$y, tst.pcacl.pred$predCandidate)
+logistic.pcatest.error
+
+logistic.pcatrain.error
+
 ```
