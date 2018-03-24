@@ -618,3 +618,31 @@ logistic.pcatest.error
 logistic.pcatrain.error
 
 ```
+
+```{r}
+# Saves predictions from Logistic modle for every county
+predicted_candidates.logistic <- predict(logistic.model.core, mapping_election[4:30], type = "response")
+
+# Changes probability vector to classification vector based off of threshold
+# determined above
+predicted_candidates.logistic <- as.factor(ifelse(predicted_candidates.logistic <= best, "Donald Trump", "Hillary Clinton"))
+
+# Changes factor levels for future code to work
+mapping_election.log$candidate <- as.factor(ifelse(mapping_election.log$candidate == "Donald Trump", "Donald Trump", "Hillary Clinton"))
+
+# Attaches predicted candidates onto our map data
+prediction_mapper.logistic <- bind_cols(predicted = predicted_candidates.logistic,z = mapping_election.log)
+
+# Creates a vector of missclassified counties
+misclass.logistic <- mutate(prediction_mapper.logistic, misclass = as.factor(ifelse((predicted == candidate),"black", ifelse(predicted == "Donald Trump", "blue", "red"))))
+
+
+prediction_mappest.logistic <-left_join(prediction_map,misclass.logistic, by = c("region", "subregion"))
+
+ggplot(data = prediction_mappest.logistic) + 
+  geom_polygon(aes(x = long, y = lat, fill = misclass, group = group), color = "black") + 
+  coord_fixed(1.3) +
+  guides(fill=FALSE)+
+  scale_fill_manual(values = c("black", "red", "blue"))
+
+```
