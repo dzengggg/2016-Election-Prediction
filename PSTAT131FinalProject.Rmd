@@ -39,6 +39,8 @@ In 2016 polls had a high bias towards Hillary Clinton winning the elections. It 
 
   
 ```{r}
+
+#reading in data 
 election.raw = read.csv("~/final-project/data/election/election.csv") %>% as.tbl
 
 census_meta = read.csv("~/final-project/data/census/metadata.csv", sep = ";") %>% as.tbl
@@ -55,12 +57,19 @@ kable(election.raw %>% head)
 
 4.
 ```{r}
-election_federal <- filter(election.raw, fips == "US")
-election_state <- filter(election.raw, fips != "US" & is.na(county)) 
+# county can be seperate by its unique aspect of having the county defined 
 election <- filter(election.raw, !is.na(county))
-#Adding missing county observations to election data frame
+
+#seperate election federal for its unique factor of having fips=US 
+election_federal <- filter(election.raw, fips == "US")
+
+# state does not have the above unique attributes 
+election_state <- filter(election.raw, fips != "US" & is.na(county)) 
+
+#Notice: state data had a county in it, this is moved back to county 
 election <- rbind(election, election_state[309:312,])
-#Taking out bad observations from state data frame
+
+#Taking out duplicate found in state ( AK) and  removing county  
 election_state <- filter(election_state, fips != 46102 & fips != 2000)
 ```
 
@@ -68,7 +77,7 @@ election_state <- filter(election_state, fips != 46102 & fips != 2000)
 
 5.
 ```{r}
-# Creates a datafram of Candidates and how many votes they recieved
+# Creates a dataframe of Candidates and how many votes they recieved
 Candidate_Votes <- (election_federal %>% select(candidate, votes))
 
 # Orders Data frame elements in descending order for
@@ -111,6 +120,7 @@ state_winner <- top_n(state.pct, n= 1)
 ```
 
 ```{r}
+#creating US map with map of States 
 states = map_data("state")
 
 ggplot(data = states) + 
@@ -120,8 +130,10 @@ ggplot(data = states) +
 ```
 7.
 ```{r}
+# adjusted for county 
 county = map_data("county")
 
+# changed fill to subregion 
 ggplot(data = county) + 
   geom_polygon(aes(x = long, y = lat, fill = subregion, group = group), color = "white") + 
   coord_fixed(1.3) +
@@ -150,11 +162,13 @@ countyjoined=left_join(countyseperate,county,by=c("region", "subregion"))
 countyjoined$fips=as.factor(countyjoined$fips)
 newcounty=left_join(countyjoined,county_winner)
 
+# US counties by majority vote
 ggplot(data = newcounty) + 
   geom_polygon(aes(x = long, y = lat, fill = newcounty$candidate, group = group),colour="white" ) + 
   coord_fixed(1.3) +
   guides(fill=FALSE)
 ```
+
 10.
 ```{r fig.width = 10, fig.height = 10}
 library(ggplot2)
