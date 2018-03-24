@@ -623,6 +623,7 @@ predicted_candidates.logistic <- predict(logistic.model.core, mapping_election[4
 # determined above
 predicted_candidates.logistic <- as.factor(ifelse(predicted_candidates.logistic <= best, "Donald Trump", "Hillary Clinton"))
 
+mapping_election.log <- mapping_election
 # Changes factor levels for future code to work
 mapping_election.log$candidate <- as.factor(ifelse(mapping_election.log$candidate == "Donald Trump", "Donald Trump", "Hillary Clinton"))
 
@@ -641,3 +642,4 @@ ggplot(data = prediction_mappest.logistic) +
   scale_fill_manual(name = "Classification Results vs. Predicted", labels = c("Correct Classification", "Incorrectly Classified Donald Trump", "Incorrectly Classified as Hillary Clinton", "Unavailable Data"), values = c("black", "red", "blue"))
 
 ```
+From our logistic models, it is clear that we should not be using principle components to perform non-linear regression. In comparison to our other models, it is not as good as our decision tree. 
